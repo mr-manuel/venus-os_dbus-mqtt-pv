@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "*** starting dbus-mqtt-pv ***"
+exec 2>&1
+exec /data/etc/dbus-mqtt-pv/dbus-mqtt-pv.py
