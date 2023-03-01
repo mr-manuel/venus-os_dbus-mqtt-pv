@@ -32,7 +32,7 @@ except:
 # set variables
 connected = 0
 
-pv_power = 0
+pv_power = -1
 pv_current = 0
 pv_voltage = 0
 pv_forward = 0
@@ -82,7 +82,11 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     try:
 
-        global pv_power, pv_current, pv_voltage, pv_forward, pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_forward, pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_forward, pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_forward
+        global \
+            pv_power, pv_current, pv_voltage, pv_forward, \
+            pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_forward, \
+            pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_forward, \
+            pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_forward
         # get JSON from topic
         if msg.topic == config['MQTT']['topic_pv']:
             if msg.payload != '{"value": null}' and msg.payload != b'{"value": null}':
@@ -259,9 +263,14 @@ def main():
     client.loop_start()
 
     # wait to receive first data, else the JSON is empty and phase setup won't work
-    while pv_power == 0:
-        logging.info("Waiting 5 seconds for receiving first data...")
+    i = 0
+    while pv_voltage == -1:
+        if i % 12 != 0 or i == 0:
+            logging.info("Waiting 5 seconds for receiving first data...")
+        else:
+            logging.warning("Waiting since %s seconds for receiving first data..." % str(i * 5))
         time.sleep(5)
+        i += 1
 
 
     #formatting
