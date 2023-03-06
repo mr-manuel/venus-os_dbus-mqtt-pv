@@ -15,19 +15,38 @@ import _thread
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
 from vedbus import VeDbusService
 
-# use WARNING for default, INFO for displaying actual steps and values, DEBUG for debugging
-logging.basicConfig(level=logging.WARNING)
 
 # get values from config.ini file
 try:
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
     if (config['MQTT']['broker_address'] == "IP_ADDR_OR_FQDN"):
-        logging.error("config.ini file using invalid default values.")
-        raise
+        print("ERROR:config.ini file is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
+        time.sleep(60)
+        sys.exit()
 except:
-    logging.error("config.ini file not found. Copy or rename the config.sample.ini to config.ini")
+    print("ERROR:config.ini file not found. Copy or rename the config.sample.ini to config.ini. The driver restarts in 60 seconds.")
+    time.sleep(60)
     sys.exit()
+
+
+# Get logging level from config.ini
+# ERROR = shows errors only
+# WARNING = shows ERROR and warnings
+# INFO = shows WARNING and running functions
+# DEBUG = shows INFO and data/values
+if 'DEFAULT' in config and 'logging' in config['DEFAULT']:
+    if config['DEFAULT']['logging'] == 'DEBUG':
+        logging.basicConfig(level=logging.DEBUG)
+    elif config['DEFAULT']['logging'] == 'INFO':
+        logging.basicConfig(level=logging.INFO)
+    elif config['DEFAULT']['logging'] == 'ERROR':
+        logging.basicConfig(level=logging.ERROR)
+    else:
+        logging.basicConfig(level=logging.WARNING)
+else:
+    logging.basicConfig(level=logging.WARNING)
+
 
 # set variables
 connected = 0
@@ -58,12 +77,12 @@ def on_disconnect(client, userdata, rc):
     global connected
     logging.warning("MQTT client: Got disconnected")
     if rc != 0:
-        logging.debug('MQTT client: Unexpected MQTT disconnection. Will auto-reconnect')
+        logging.warning('MQTT client: Unexpected MQTT disconnection. Will auto-reconnect')
     else:
-        logging.debug('MQTT client: rc value:' + str(rc))
+        logging.warning('MQTT client: rc value:' + str(rc))
 
     try:
-        logging.info("MQTT client: Trying to reconnect")
+        logging.warning("MQTT client: Trying to reconnect")
         client.connect(config['MQTT']['broker_address'])
         connected = 1
     except Exception as e:
@@ -87,43 +106,57 @@ def on_message(client, userdata, msg):
             pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_forward, \
             pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_forward, \
             pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_forward
+
         # get JSON from topic
         if msg.topic == config['MQTT']['topic_pv']:
-            if msg.payload != '{"value": null}' and msg.payload != b'{"value": null}':
+            if msg.payload != '' and msg.payload != b'':
                 jsonpayload = json.loads(msg.payload)
-                pv_power   = float(jsonpayload['pv']['power'])
-                pv_current = float(jsonpayload['pv']['current']) if 'current' in jsonpayload['pv'] else pv_power/float(config['DEFAULT']['voltage'])
-                pv_voltage = float(jsonpayload['pv']['voltage']) if 'voltage' in jsonpayload['pv'] else float(config['DEFAULT']['voltage'])
-                pv_forward = float(jsonpayload['pv']['energy_forward']) if 'energy_forward' in jsonpayload['pv'] else 0
 
-                # check if L1 and L1 -> power exists
-                if 'L1' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L1']:
-                    pv_L1_power   = float(jsonpayload['pv']['L1']['power'])
-                    pv_L1_current = float(jsonpayload['pv']['L1']['current']) if 'current' in jsonpayload['pv']['L1'] else pv_L1_power/float(config['DEFAULT']['voltage'])
-                    pv_L1_voltage = float(jsonpayload['pv']['L1']['voltage']) if 'voltage' in jsonpayload['pv']['L1'] else float(config['DEFAULT']['voltage'])
-                    pv_L1_forward = float(jsonpayload['pv']['L1']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L1'] else 0
+                if 'pv' in jsonpayload:
+                    if type(jsonpayload['pv']) == dict and 'power' in jsonpayload['pv']:
+                        pv_power   = float(jsonpayload['pv']['power'])
+                        pv_current = float(jsonpayload['pv']['current']) if 'current' in jsonpayload['pv'] else pv_power/float(config['DEFAULT']['voltage'])
+                        pv_voltage = float(jsonpayload['pv']['voltage']) if 'voltage' in jsonpayload['pv'] else float(config['DEFAULT']['voltage'])
+                        pv_forward = float(jsonpayload['pv']['energy_forward']) if 'energy_forward' in jsonpayload['pv'] else 0
 
-                # check if L2 and L2 -> power exists
-                if 'L2' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L2']:
-                    pv_L2_power   = float(jsonpayload['pv']['L2']['power'])
-                    pv_L2_current = float(jsonpayload['pv']['L2']['current']) if 'current' in jsonpayload['pv']['L2'] else pv_L2_power/float(config['DEFAULT']['voltage'])
-                    pv_L2_voltage = float(jsonpayload['pv']['L2']['voltage']) if 'voltage' in jsonpayload['pv']['L2'] else float(config['DEFAULT']['voltage'])
-                    pv_L2_forward = float(jsonpayload['pv']['L2']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L2'] else 0
+                        # check if L1 and L1 -> power exists
+                        if 'L1' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L1']:
+                            pv_L1_power   = float(jsonpayload['pv']['L1']['power'])
+                            pv_L1_current = float(jsonpayload['pv']['L1']['current']) if 'current' in jsonpayload['pv']['L1'] else pv_L1_power/float(config['DEFAULT']['voltage'])
+                            pv_L1_voltage = float(jsonpayload['pv']['L1']['voltage']) if 'voltage' in jsonpayload['pv']['L1'] else float(config['DEFAULT']['voltage'])
+                            pv_L1_forward = float(jsonpayload['pv']['L1']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L1'] else 0
 
-                # check if L3 and L3 -> power exists
-                if 'L3' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L3']:
-                    pv_L3_power   = float(jsonpayload['pv']['L3']['power'])
-                    pv_L3_current = float(jsonpayload['pv']['L3']['current']) if 'current' in jsonpayload['pv']['L3'] else pv_L3_power/float(config['DEFAULT']['voltage'])
-                    pv_L3_voltage = float(jsonpayload['pv']['L3']['voltage']) if 'voltage' in jsonpayload['pv']['L3'] else float(config['DEFAULT']['voltage'])
-                    pv_L3_forward = float(jsonpayload['pv']['L3']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L3'] else 0
+                        # check if L2 and L2 -> power exists
+                        if 'L2' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L2']:
+                            pv_L2_power   = float(jsonpayload['pv']['L2']['power'])
+                            pv_L2_current = float(jsonpayload['pv']['L2']['current']) if 'current' in jsonpayload['pv']['L2'] else pv_L2_power/float(config['DEFAULT']['voltage'])
+                            pv_L2_voltage = float(jsonpayload['pv']['L2']['voltage']) if 'voltage' in jsonpayload['pv']['L2'] else float(config['DEFAULT']['voltage'])
+                            pv_L2_forward = float(jsonpayload['pv']['L2']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L2'] else 0
+
+                        # check if L3 and L3 -> power exists
+                        if 'L3' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L3']:
+                            pv_L3_power   = float(jsonpayload['pv']['L3']['power'])
+                            pv_L3_current = float(jsonpayload['pv']['L3']['current']) if 'current' in jsonpayload['pv']['L3'] else pv_L3_power/float(config['DEFAULT']['voltage'])
+                            pv_L3_voltage = float(jsonpayload['pv']['L3']['voltage']) if 'voltage' in jsonpayload['pv']['L3'] else float(config['DEFAULT']['voltage'])
+                            pv_L3_forward = float(jsonpayload['pv']['L3']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L3'] else 0
+                    else:
+                        logging.error("Received JSON MQTT message does not include a power object in the pv object. Expected at least: {\"pv\": {\"power\": 0.0}\"}")
+                        logging.debug("MQTT payload: " + str(msg.payload)[1:])
+                else:
+                    logging.error("Received JSON MQTT message does not include a pv object. Expected at least: {\"pv\": {\"power\": 0.0}\"}")
+                    logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
             else:
-                print("Answer from MQTT was NULL and therefore it was ignored")
+                logging.warning("Received JSON MQTT message was empty and therefore it was ignored")
+                logging.debug("MQTT payload: " + str(msg.payload)[1:])
+
+    except ValueError as e:
+        logging.error("Received message is not a valid JSON. %s" % e)
+        logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
     except Exception as e:
-        logging.error("The programm MQTTtoMeter is crashed. (on message function)")
-        print(e)
-        print("In the MQTTtoMeter programm something went wrong during the reading of the messages")
+        logging.error("Exception occurred: %s" % e)
+        logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
 
 
@@ -152,8 +185,8 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', productname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.0.1')
-        self._dbusservice.add_path('/HardwareVersion', '0.0.1')
+        self._dbusservice.add_path('/FirmwareVersion', '0.0.2')
+        #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
         self._dbusservice.add_path('/Latency', None)
@@ -200,13 +233,13 @@ class DbusMqttPvService:
             self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2)
             self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2)
 
-        logging.info("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
+        logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
         if pv_L1_power:
-            logging.info("|- L1: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L1_power, pv_L1_voltage, pv_L1_current))
+            logging.debug("|- L1: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L1_power, pv_L1_voltage, pv_L1_current))
         if pv_L2_power:
-            logging.info("|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L2_power, pv_L2_voltage, pv_L2_current))
+            logging.debug("|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L2_power, pv_L2_voltage, pv_L2_current))
         if pv_L3_power:
-            logging.info("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
+            logging.debug("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
 
 
         # increment UpdateIndex - to show that new data is available
@@ -238,21 +271,21 @@ def main():
 
     # check tls and use settings, if provided
     if 'tls_enabled' in config['MQTT'] and config['MQTT']['tls_enabled'] == '1':
-        logging.debug("MQTT client: TLS is enabled")
+        logging.info("MQTT client: TLS is enabled")
 
         if 'tls_path_to_ca' in config['MQTT'] and config['MQTT']['tls_path_to_ca'] != '':
-            logging.debug("MQTT client: TLS: custom ca \"%s\" used" % config['MQTT']['tls_path_to_ca'])
+            logging.info("MQTT client: TLS: custom ca \"%s\" used" % config['MQTT']['tls_path_to_ca'])
             client.tls_set(config['MQTT']['tls_path_to_ca'], tls_version=2)
         else:
             client.tls_set(tls_version=2)
 
         if 'tls_insecure' in config['MQTT'] and config['MQTT']['tls_insecure'] != '':
-            logging.debug("MQTT client: TLS certificate server hostname verification disabled")
+            logging.info("MQTT client: TLS certificate server hostname verification disabled")
             client.tls_insecure_set(True)
 
     # check if username and password are set
     if 'username' in config['MQTT'] and 'password' in config['MQTT'] and config['MQTT']['username'] != '' and config['MQTT']['password'] != '':
-        logging.debug("MQTT client: Using username \"%s\" and password to connect" % config['MQTT']['username'])
+        logging.info("MQTT client: Using username \"%s\" and password to connect" % config['MQTT']['username'])
         client.username_pw_set(username=config['MQTT']['username'], password=config['MQTT']['password'])
 
      # connect to broker
@@ -264,7 +297,7 @@ def main():
 
     # wait to receive first data, else the JSON is empty and phase setup won't work
     i = 0
-    while pv_voltage == -1:
+    while pv_power == -1:
         if i % 12 != 0 or i == 0:
             logging.info("Waiting 5 seconds for receiving first data...")
         else:
