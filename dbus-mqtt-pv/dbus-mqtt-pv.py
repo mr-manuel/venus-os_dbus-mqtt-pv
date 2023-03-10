@@ -352,6 +352,7 @@ def main():
         servicename='com.victronenergy.pvinverter.mqtt_pv_' + str(config['MQTT']['device_instance']),
         deviceinstance=int(config['MQTT']['device_instance']),
         customname=config['MQTT']['device_name'],
+        paths=paths_dbus
         )
 
     logging.info('Connected to dbus and switching over to GLib.MainLoop() (= event based)')
