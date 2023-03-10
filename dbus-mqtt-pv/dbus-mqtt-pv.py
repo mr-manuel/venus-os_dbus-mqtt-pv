@@ -94,7 +94,7 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logging.info("MQTT client: Connected to MQTT broker!")
         connected = 1
-        client.subscribe(config['MQTT']['topic_pv'])
+        client.subscribe(config['MQTT']['topic'])
     else:
         logging.error("MQTT client: Failed to connect, return code %d\n", rc)
 
@@ -108,7 +108,7 @@ def on_message(client, userdata, msg):
             pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_forward
 
         # get JSON from topic
-        if msg.topic == config['MQTT']['topic_pv']:
+        if msg.topic == config['MQTT']['topic']:
             if msg.payload != '' and msg.payload != b'':
                 jsonpayload = json.loads(msg.payload)
 
@@ -167,6 +167,7 @@ class DbusMqttPvService:
         deviceinstance,
         paths,
         productname='MQTT PV',
+        customname='MQTT PV',
         connection='MQTT PV service'
     ):
 
@@ -184,8 +185,8 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/DeviceInstance', deviceinstance)
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
-        self._dbusservice.add_path('/CustomName', productname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.0.2')
+        self._dbusservice.add_path('/CustomName', customname)
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.0')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -264,7 +265,7 @@ def main():
 
 
     # MQTT setup
-    client = mqtt.Client("MqttPv")
+    client = mqtt.Client("MqttPv_" + str(config['MQTT']['device_instance']))
     client.on_disconnect = on_disconnect
     client.on_connect = on_connect
     client.on_message = on_message
@@ -348,9 +349,9 @@ def main():
 
 
     pvac_output = DbusMqttPvService(
-        servicename='com.victronenergy.pvinverter.mqtt_pv',
-        deviceinstance=51,
-        paths=paths_dbus
+        servicename='com.victronenergy.pvinverter.mqtt_pv_' + str(config['MQTT']['device_instance']),
+        deviceinstance=int(config['MQTT']['device_instance']),
+        customname=config['MQTT']['device_name'],
         )
 
     logging.info('Connected to dbus and switching over to GLib.MainLoop() (= event based)')
