@@ -48,8 +48,17 @@ else:
     logging.basicConfig(level=logging.WARNING)
 
 
+# get timeout
+if 'DEFAULT' in config and 'timeout' in config['DEFAULT']:
+    timeout = int(config['DEFAULT']['timeout'])
+else:
+    timeout = 60
+
+
 # set variables
 connected = 0
+last_changed = 0
+last_updated = 0
 
 pv_power = -1
 pv_current = 0
@@ -102,6 +111,7 @@ def on_message(client, userdata, msg):
     try:
 
         global \
+            last_changed, \
             pv_power, pv_current, pv_voltage, pv_forward, \
             pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_forward, \
             pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_forward, \
@@ -111,6 +121,8 @@ def on_message(client, userdata, msg):
         if msg.topic == config['MQTT']['topic']:
             if msg.payload != '' and msg.payload != b'':
                 jsonpayload = json.loads(msg.payload)
+
+                last_changed = int(time.time())
 
                 if 'pv' in jsonpayload:
                     if type(jsonpayload['pv']) == dict and 'power' in jsonpayload['pv']:
@@ -186,7 +198,7 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.1.0')
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.1')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -204,44 +216,58 @@ class DbusMqttPvService:
 
 
     def _update(self):
-        self._dbusservice['/Ac/Power'] =  round(pv_power, 2)
-        self._dbusservice['/Ac/Current'] = round(pv_current, 2)
-        self._dbusservice['/Ac/Voltage'] = round(pv_voltage, 2)
-        self._dbusservice['/Ac/Energy/Forward'] = round(pv_forward, 2)
 
-        if pv_L1_power != None:
-            self._dbusservice['/Ac/L1/Power'] = round(pv_L1_power, 2)
-            self._dbusservice['/Ac/L1/Current'] = round(pv_L1_current, 2)
-            self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2)
-            self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2)
-        else:
-            self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2)
-            self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2)
-            self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2)
-            self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2)
+        global \
+            last_changed, last_updated
 
-        #self._dbusservice['/StatusCode'] = 7
+        now = int(time.time())
 
-        if pv_L2_power != None:
-            self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2)
-            self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2)
-            self._dbusservice['/Ac/L2/Voltage'] = round(pv_L2_voltage, 2)
-            self._dbusservice['/Ac/L2/Energy/Forward'] = round(pv_L2_forward, 2)
+        if last_changed != last_updated:
 
-        if pv_L3_power != None:
-            self._dbusservice['/Ac/L3/Power'] = round(pv_L3_power, 2)
-            self._dbusservice['/Ac/L3/Current'] = round(pv_L3_current, 2)
-            self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2)
-            self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2)
+            self._dbusservice['/Ac/Power'] =  round(pv_power, 2)
+            self._dbusservice['/Ac/Current'] = round(pv_current, 2)
+            self._dbusservice['/Ac/Voltage'] = round(pv_voltage, 2)
+            self._dbusservice['/Ac/Energy/Forward'] = round(pv_forward, 2)
 
-        logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
-        if pv_L1_power:
-            logging.debug("|- L1: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L1_power, pv_L1_voltage, pv_L1_current))
-        if pv_L2_power:
-            logging.debug("|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L2_power, pv_L2_voltage, pv_L2_current))
-        if pv_L3_power:
-            logging.debug("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
+            if pv_L1_power != None:
+                self._dbusservice['/Ac/L1/Power'] = round(pv_L1_power, 2)
+                self._dbusservice['/Ac/L1/Current'] = round(pv_L1_current, 2)
+                self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2)
+                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2)
+            else:
+                self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2)
+                self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2)
+                self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2)
+                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2)
 
+            #self._dbusservice['/StatusCode'] = 7
+
+            if pv_L2_power != None:
+                self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2)
+                self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2)
+                self._dbusservice['/Ac/L2/Voltage'] = round(pv_L2_voltage, 2)
+                self._dbusservice['/Ac/L2/Energy/Forward'] = round(pv_L2_forward, 2)
+
+            if pv_L3_power != None:
+                self._dbusservice['/Ac/L3/Power'] = round(pv_L3_power, 2)
+                self._dbusservice['/Ac/L3/Current'] = round(pv_L3_current, 2)
+                self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2)
+                self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2)
+
+            logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
+            if pv_L1_power:
+                logging.debug("|- L1: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L1_power, pv_L1_voltage, pv_L1_current))
+            if pv_L2_power:
+                logging.debug("|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L2_power, pv_L2_voltage, pv_L2_current))
+            if pv_L3_power:
+                logging.debug("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
+
+            last_updated = last_changed
+
+        # quit driver if timeout is exceeded
+        if timeout != 0 and (now - last_changed) > timeout:
+            logging.error("Driver stopped. Timeout of %i seconds exceeded, since no new MQTT message was received in this time." % timeout)
+            sys.exit()
 
         # increment UpdateIndex - to show that new data is available
         index = self._dbusservice['/UpdateIndex'] + 1  # increment index

@@ -148,7 +148,7 @@ It's possible to have multiple instances, but it's not automated. Follow these s
 
 1. Save the new name to a variable `driverclone=dbus-mqtt-pv-2`
 
-2. Copy current folder and add a number `cp -r /data/etc/dbus-mqtt-pv/ /data/etc/$driverclone/`
+2. Copy current folder `cp -r /data/etc/dbus-mqtt-pv/ /data/etc/$driverclone/`
 
 3. Rename the main script `mv /data/etc/$driverclone/dbus-mqtt-pv.py /data/etc/$driverclone/$driverclone.py`
 
