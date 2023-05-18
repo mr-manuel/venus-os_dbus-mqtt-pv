@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-from gi.repository import GLib
+from gi.repository import GLib  # pyright: ignore[reportMissingImports]
 import platform
 import logging
 import sys
 import os
-import time
+from time import sleep, time
 import json
 import paho.mqtt.client as mqtt
-import configparser # for config/ini file
+import configparser  # for config/ini file
 import _thread
 
 # import Victron Energy packages
@@ -18,15 +18,26 @@ from vedbus import VeDbusService
 
 # get values from config.ini file
 try:
-    config = configparser.ConfigParser()
-    config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
-    if (config['MQTT']['broker_address'] == "IP_ADDR_OR_FQDN"):
-        print("ERROR:config.ini file is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
-        time.sleep(60)
+    config_file = (os.path.dirname(os.path.realpath(__file__))) + "/config.ini"
+    if os.path.exists(config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        if (config['MQTT']['broker_address'] == "IP_ADDR_OR_FQDN"):
+            print("ERROR:The \"config.ini\" is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
+            sleep(60)
+            sys.exit()
+    else:
+        print("ERROR:The \"" + config_file + "\" is not found. Did you copy or rename the \"config.sample.ini\" to \"config.ini\"? The driver restarts in 60 seconds.")
+        sleep(60)
         sys.exit()
-except:
-    print("ERROR:config.ini file not found. Copy or rename the config.sample.ini to config.ini. The driver restarts in 60 seconds.")
-    time.sleep(60)
+
+except Exception:
+    exception_type, exception_object, exception_traceback = sys.exc_info()
+    file = exception_traceback.tb_frame.f_code.co_filename
+    line = exception_traceback.tb_lineno
+    print(f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}")
+    print("ERROR:The driver restarts in 60 seconds.")
+    sleep(60)
     sys.exit()
 
 
@@ -68,16 +79,19 @@ pv_forward = 0
 pv_L1_power = None
 pv_L1_current = None
 pv_L1_voltage = None
+pv_L1_frequency = None
 pv_L1_forward = None
 
 pv_L2_power = None
 pv_L2_current = None
 pv_L2_voltage = None
+pv_L2_frequency = None
 pv_L2_forward = None
 
 pv_L3_power = None
 pv_L3_current = None
 pv_L3_voltage = None
+pv_L3_frequency = None
 pv_L3_forward = None
 
 
@@ -90,13 +104,17 @@ def on_disconnect(client, userdata, rc):
     else:
         logging.warning('MQTT client: rc value:' + str(rc))
 
-    try:
-        logging.warning("MQTT client: Trying to reconnect")
-        client.connect(config['MQTT']['broker_address'])
-        connected = 1
-    except Exception as e:
-        logging.error("MQTT client: Error in retrying to connect with broker: %s" % e)
-        connected = 0
+    while connected == 0:
+        try:
+            logging.warning("MQTT client: Trying to reconnect")
+            client.connect(config['MQTT']['broker_address'])
+            connected = 1
+        except Exception as err:
+            logging.error(f"MQTT client: Error in retrying to connect with broker ({config['MQTT']['broker_address']}:{config['MQTT']['broker_port']}): {err}")
+            logging.error("MQTT client: Retrying in 15 seconds")
+            connected = 0
+            sleep(15)
+
 
 def on_connect(client, userdata, flags, rc):
     global connected
@@ -107,47 +125,48 @@ def on_connect(client, userdata, flags, rc):
     else:
         logging.error("MQTT client: Failed to connect, return code %d\n", rc)
 
+
 def on_message(client, userdata, msg):
     try:
 
         global \
             last_changed, \
             pv_power, pv_current, pv_voltage, pv_forward, \
-            pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_forward, \
-            pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_forward, \
-            pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_forward
+            pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_frequency, pv_L1_forward, pv_L1_reverse, \
+            pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_frequency, pv_L2_forward, pv_L2_reverse, \
+            pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_frequency, pv_L3_forward, pv_L3_reverse
 
         # get JSON from topic
         if msg.topic == config['MQTT']['topic']:
             if msg.payload != '' and msg.payload != b'':
                 jsonpayload = json.loads(msg.payload)
 
-                last_changed = int(time.time())
+                last_changed = int(time())
 
                 if 'pv' in jsonpayload:
                     if type(jsonpayload['pv']) == dict and 'power' in jsonpayload['pv']:
-                        pv_power   = float(jsonpayload['pv']['power'])
+                        pv_power = float(jsonpayload['pv']['power'])
                         pv_current = float(jsonpayload['pv']['current']) if 'current' in jsonpayload['pv'] else pv_power/float(config['DEFAULT']['voltage'])
                         pv_voltage = float(jsonpayload['pv']['voltage']) if 'voltage' in jsonpayload['pv'] else float(config['DEFAULT']['voltage'])
                         pv_forward = float(jsonpayload['pv']['energy_forward']) if 'energy_forward' in jsonpayload['pv'] else 0
 
                         # check if L1 and L1 -> power exists
                         if 'L1' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L1']:
-                            pv_L1_power   = float(jsonpayload['pv']['L1']['power'])
+                            pv_L1_power = float(jsonpayload['pv']['L1']['power'])
                             pv_L1_current = float(jsonpayload['pv']['L1']['current']) if 'current' in jsonpayload['pv']['L1'] else pv_L1_power/float(config['DEFAULT']['voltage'])
                             pv_L1_voltage = float(jsonpayload['pv']['L1']['voltage']) if 'voltage' in jsonpayload['pv']['L1'] else float(config['DEFAULT']['voltage'])
                             pv_L1_forward = float(jsonpayload['pv']['L1']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L1'] else 0
 
                         # check if L2 and L2 -> power exists
                         if 'L2' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L2']:
-                            pv_L2_power   = float(jsonpayload['pv']['L2']['power'])
+                            pv_L2_power = float(jsonpayload['pv']['L2']['power'])
                             pv_L2_current = float(jsonpayload['pv']['L2']['current']) if 'current' in jsonpayload['pv']['L2'] else pv_L2_power/float(config['DEFAULT']['voltage'])
                             pv_L2_voltage = float(jsonpayload['pv']['L2']['voltage']) if 'voltage' in jsonpayload['pv']['L2'] else float(config['DEFAULT']['voltage'])
                             pv_L2_forward = float(jsonpayload['pv']['L2']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L2'] else 0
 
                         # check if L3 and L3 -> power exists
                         if 'L3' in jsonpayload['pv'] and 'power' in jsonpayload['pv']['L3']:
-                            pv_L3_power   = float(jsonpayload['pv']['L3']['power'])
+                            pv_L3_power = float(jsonpayload['pv']['L3']['power'])
                             pv_L3_current = float(jsonpayload['pv']['L3']['current']) if 'current' in jsonpayload['pv']['L3'] else pv_L3_power/float(config['DEFAULT']['voltage'])
                             pv_L3_voltage = float(jsonpayload['pv']['L3']['voltage']) if 'voltage' in jsonpayload['pv']['L3'] else float(config['DEFAULT']['voltage'])
                             pv_L3_forward = float(jsonpayload['pv']['L3']['energy_forward']) if 'energy_forward' in jsonpayload['pv']['L3'] else 0
@@ -169,7 +188,6 @@ def on_message(client, userdata, msg):
     except Exception as e:
         logging.error("Exception occurred: %s" % e)
         logging.debug("MQTT payload: " + str(msg.payload)[1:])
-
 
 
 class DbusMqttPvService:
@@ -198,13 +216,13 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.1.1')
-        #self._dbusservice.add_path('/HardwareVersion', '')
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.2 (20230518)')
+        # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
         self._dbusservice.add_path('/Latency', None)
         self._dbusservice.add_path('/ErrorCode', 0)
-        self._dbusservice.add_path('/Position', int(config['PV']['position'])) # only needed for pvinverter
+        self._dbusservice.add_path('/Position', int(config['PV']['position']))  # only needed for pvinverter
         self._dbusservice.add_path('/StatusCode', 0)  # Dummy path so VRM detects us as a PV-inverter
 
         for path, settings in self._paths.items():
@@ -212,46 +230,49 @@ class DbusMqttPvService:
                 path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue
                 )
 
-        GLib.timeout_add(1000, self._update) # pause 1000ms before the next request
-
+        GLib.timeout_add(1000, self._update)  # pause 1000ms before the next request
 
     def _update(self):
 
         global \
             last_changed, last_updated
 
-        now = int(time.time())
+        now = int(time())
 
         if last_changed != last_updated:
 
-            self._dbusservice['/Ac/Power'] =  round(pv_power, 2)
+            self._dbusservice['/Ac/Power'] = round(pv_power, 2)
             self._dbusservice['/Ac/Current'] = round(pv_current, 2)
             self._dbusservice['/Ac/Voltage'] = round(pv_voltage, 2)
             self._dbusservice['/Ac/Energy/Forward'] = round(pv_forward, 2)
 
-            if pv_L1_power != None:
+            if pv_L1_power is not None:
                 self._dbusservice['/Ac/L1/Power'] = round(pv_L1_power, 2)
                 self._dbusservice['/Ac/L1/Current'] = round(pv_L1_current, 2)
                 self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2)
+                self._dbusservice['/Ac/L1/Frequency'] = round(pv_L1_frequency, 2)
                 self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2)
             else:
                 self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2)
                 self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2)
                 self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2)
+                self._dbusservice['/Ac/L1/Frequency'] = None
                 self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2)
 
-            #self._dbusservice['/StatusCode'] = 7
+            # self._dbusservice['/StatusCode'] = 7
 
-            if pv_L2_power != None:
+            if pv_L2_power is not None:
                 self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2)
                 self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2)
                 self._dbusservice['/Ac/L2/Voltage'] = round(pv_L2_voltage, 2)
+                self._dbusservice['/Ac/L2/Frequency'] = round(pv_L2_frequency, 2)
                 self._dbusservice['/Ac/L2/Energy/Forward'] = round(pv_L2_forward, 2)
 
-            if pv_L3_power != None:
+            if pv_L3_power is not None:
                 self._dbusservice['/Ac/L3/Power'] = round(pv_L3_power, 2)
                 self._dbusservice['/Ac/L3/Current'] = round(pv_L3_current, 2)
                 self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2)
+                self._dbusservice['/Ac/L3/Frequency'] = round(pv_L3_frequency, 2)
                 self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2)
 
             logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
@@ -278,17 +299,15 @@ class DbusMqttPvService:
 
     def _handlechangedvalue(self, path, value):
         logging.debug("someone else updated %s to %s" % (path, value))
-        return True # accept the change
-
+        return True  # accept the change
 
 
 def main():
-    _thread.daemon = True # allow the program to quit
+    _thread.daemon = True  # allow the program to quit
 
-    from dbus.mainloop.glib import DBusGMainLoop
+    from dbus.mainloop.glib import DBusGMainLoop  # pyright: ignore[reportMissingImports]
     # Have a mainloop, so we can send/receive asynchronous calls to and from dbus
     DBusGMainLoop(set_as_default=True)
-
 
     # MQTT setup
     client = mqtt.Client("MqttPv_" + str(config['MQTT']['device_instance']))
@@ -315,7 +334,8 @@ def main():
         logging.info("MQTT client: Using username \"%s\" and password to connect" % config['MQTT']['username'])
         client.username_pw_set(username=config['MQTT']['username'], password=config['MQTT']['password'])
 
-     # connect to broker
+    # connect to broker
+    logging.info(f"MQTT client: Connecting to broker {config['MQTT']['broker_address']} on port {config['MQTT']['broker_port']}")
     client.connect(
         host=config['MQTT']['broker_address'],
         port=int(config['MQTT']['broker_port'])
@@ -329,16 +349,16 @@ def main():
             logging.info("Waiting 5 seconds for receiving first data...")
         else:
             logging.warning("Waiting since %s seconds for receiving first data..." % str(i * 5))
-        time.sleep(5)
+        sleep(5)
         i += 1
 
-
-    #formatting
-    _kwh = lambda p, v: (str(round(v, 2)) + 'kWh')
-    _a = lambda p, v: (str(round(v, 2)) + 'A')
-    _w = lambda p, v: (str(round(v, 2)) + 'W')
-    _v = lambda p, v: (str(round(v, 2)) + 'V')
-    _n = lambda p, v: (str(round(v, 0)))
+    # formatting
+    def _kwh(p, v): return (str("%.2f" % v) + "kWh")
+    def _a(p, v): return (str("%.1f" % v) + "A")
+    def _w(p, v): return (str("%i" % v) + "W")
+    def _v(p, v): return (str("%.2f" % v) + "V")
+    def _hz(p, v): return (str("%.4f" % v) + "Hz")
+    def _n(p, v): return (str("%i" % v))
 
     paths_dbus = {
         '/Ac/Power': {'initial': 0, 'textformat': _w},
@@ -349,6 +369,7 @@ def main():
         '/Ac/L1/Power': {'initial': 0, 'textformat': _w},
         '/Ac/L1/Current': {'initial': 0, 'textformat': _a},
         '/Ac/L1/Voltage': {'initial': 0, 'textformat': _v},
+        '/Ac/L1/Frequency': {'initial': None, 'textformat': _hz},
         '/Ac/L1/Energy/Forward': {'initial': None, 'textformat': _kwh},
 
         '/Ac/MaxPower': {'initial': int(config['PV']['max']), 'textformat': _w},
@@ -357,24 +378,25 @@ def main():
         '/UpdateIndex': {'initial': 0, 'textformat': _n},
     }
 
-    if pv_L2_power != None:
+    if pv_L2_power is not None:
         paths_dbus.update({
             '/Ac/L2/Power': {'initial': 0, 'textformat': _w},
             '/Ac/L2/Current': {'initial': 0, 'textformat': _a},
             '/Ac/L2/Voltage': {'initial': 0, 'textformat': _v},
+            '/Ac/L2/Frequency': {'initial': None, 'textformat': _hz},
             '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
         })
 
-    if pv_L3_power != None:
+    if pv_L3_power is not None:
         paths_dbus.update({
             '/Ac/L3/Power': {'initial': 0, 'textformat': _w},
             '/Ac/L3/Current': {'initial': 0, 'textformat': _a},
             '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},
+            '/Ac/L2/Frequency': {'initial': None, 'textformat': _hz},
             '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh},
         })
 
-
-    pvac_output = DbusMqttPvService(
+    DbusMqttPvService(
         servicename='com.victronenergy.pvinverter.mqtt_pv_' + str(config['MQTT']['device_instance']),
         deviceinstance=int(config['MQTT']['device_instance']),
         customname=config['MQTT']['device_name'],
@@ -386,6 +408,5 @@ def main():
     mainloop.run()
 
 
-
 if __name__ == "__main__":
-  main()
+    main()
