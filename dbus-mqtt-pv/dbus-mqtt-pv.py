@@ -216,7 +216,7 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.1.2 (20230518)')
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.3 (20230522)')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -241,39 +241,39 @@ class DbusMqttPvService:
 
         if last_changed != last_updated:
 
-            self._dbusservice['/Ac/Power'] = round(pv_power, 2)
-            self._dbusservice['/Ac/Current'] = round(pv_current, 2)
-            self._dbusservice['/Ac/Voltage'] = round(pv_voltage, 2)
-            self._dbusservice['/Ac/Energy/Forward'] = round(pv_forward, 2)
+            self._dbusservice['/Ac/Power'] = round(pv_power, 2) if pv_power is not None else None
+            self._dbusservice['/Ac/Current'] = round(pv_current, 2) if pv_current is not None else None
+            self._dbusservice['/Ac/Voltage'] = round(pv_voltage, 2) if pv_voltage is not None else None
+            self._dbusservice['/Ac/Energy/Forward'] = round(pv_forward, 2) if pv_forward is not None else None
 
             if pv_L1_power is not None:
-                self._dbusservice['/Ac/L1/Power'] = round(pv_L1_power, 2)
-                self._dbusservice['/Ac/L1/Current'] = round(pv_L1_current, 2)
-                self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2)
-                self._dbusservice['/Ac/L1/Frequency'] = round(pv_L1_frequency, 2)
-                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2)
+                self._dbusservice['/Ac/L1/Power'] = round(pv_L1_power, 2) if pv_L1_power is not None else None
+                self._dbusservice['/Ac/L1/Current'] = round(pv_L1_current, 2) if pv_L1_current is not None else None
+                self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2) if pv_L1_voltage is not None else None
+                self._dbusservice['/Ac/L1/Frequency'] = round(pv_L1_frequency, 2) if pv_L1_frequency is not None else None
+                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2) if pv_L1_forward is not None else None
             else:
-                self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2)
-                self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2)
-                self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2)
+                self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2) if pv_power is not None else None
+                self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2) if pv_current is not None else None
+                self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2) if pv_voltage is not None else None
                 self._dbusservice['/Ac/L1/Frequency'] = None
-                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2)
+                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2) if pv_forward is not None else None
 
             # self._dbusservice['/StatusCode'] = 7
 
             if pv_L2_power is not None:
-                self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2)
-                self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2)
-                self._dbusservice['/Ac/L2/Voltage'] = round(pv_L2_voltage, 2)
-                self._dbusservice['/Ac/L2/Frequency'] = round(pv_L2_frequency, 2)
-                self._dbusservice['/Ac/L2/Energy/Forward'] = round(pv_L2_forward, 2)
+                self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2) if pv_L2_power is not None else None
+                self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2) if pv_L2_current is not None else None
+                self._dbusservice['/Ac/L2/Voltage'] = round(pv_L2_voltage, 2) if pv_L2_voltage is not None else None
+                self._dbusservice['/Ac/L2/Frequency'] = round(pv_L2_frequency, 2) if pv_L2_frequency is not None else None
+                self._dbusservice['/Ac/L2/Energy/Forward'] = round(pv_L2_forward, 2) if pv_L2_forward is not None else None
 
             if pv_L3_power is not None:
-                self._dbusservice['/Ac/L3/Power'] = round(pv_L3_power, 2)
-                self._dbusservice['/Ac/L3/Current'] = round(pv_L3_current, 2)
-                self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2)
-                self._dbusservice['/Ac/L3/Frequency'] = round(pv_L3_frequency, 2)
-                self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2)
+                self._dbusservice['/Ac/L3/Power'] = round(pv_L3_power, 2) if pv_L3_power is not None else None
+                self._dbusservice['/Ac/L3/Current'] = round(pv_L3_current, 2) if pv_L3_current is not None else None
+                self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2) if pv_L3_voltage is not None else None
+                self._dbusservice['/Ac/L3/Frequency'] = round(pv_L3_frequency, 2) if pv_L3_frequency is not None else None
+                self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2) if pv_L3_forward is not None else None
 
             logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
             if pv_L1_power:
@@ -392,7 +392,7 @@ def main():
             '/Ac/L3/Power': {'initial': 0, 'textformat': _w},
             '/Ac/L3/Current': {'initial': 0, 'textformat': _a},
             '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},
-            '/Ac/L2/Frequency': {'initial': None, 'textformat': _hz},
+            '/Ac/L3/Frequency': {'initial': None, 'textformat': _hz},
             '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh},
         })
 
