@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.4
+* Added: Frequency
+* Added: StatusCode: 7 = Running; 8 = Standby
+
 ## v0.1.3
 * Changed: Fix crash when rounding none value
 * Changed: Fixed a typo

@@ -219,7 +219,7 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.1.3 (20230522)')
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.4 (20231106)')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -262,8 +262,6 @@ class DbusMqttPvService:
                 self._dbusservice['/Ac/L1/Frequency'] = None
                 self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2) if pv_forward is not None else None
 
-            # self._dbusservice['/StatusCode'] = 7
-
             if pv_L2_power is not None:
                 self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2) if pv_L2_power is not None else None
                 self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2) if pv_L2_current is not None else None
@@ -285,6 +283,14 @@ class DbusMqttPvService:
                 logging.debug("|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L2_power, pv_L2_voltage, pv_L2_current))
             if pv_L3_power:
                 logging.debug("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
+
+            # is only displayed for Fronius inverters (product ID 0xA142)
+            # if power above 10 W, set status code to 9 (running)
+            if self._dbusservice['/StatusCode'] != 7 and self._dbusservice['/Ac/Power'] > 10:
+                self._dbusservice['/StatusCode'] = 7
+            # else set status code to 8 (standby)
+            elif self._dbusservice['/StatusCode'] != 8:
+                self._dbusservice['/StatusCode'] = 8
 
             last_updated = last_changed
 

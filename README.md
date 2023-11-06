@@ -7,6 +7,13 @@
 I wrote this script for myself. I'm not responsible, if you damage something using my script.
 
 
+### Supporting/Sponsoring this project
+
+You like the project and you want to support me?
+
+[<img src="https://github.md0.eu/uploads/donate-button.svg" height="50">](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
+
+
 ### Purpose
 
 The script emulates a Photovoltaic AC Inverter in Venus OS. It gets the MQTT data from a subscribed topic and publishes the information on the dbus as the service `com.victronenergy.pvinverter.mqtt_pv` with the VRM instance `51`.
@@ -197,10 +204,3 @@ It was tested on Venus OS Large `v2.92` on the following devices:
 ![Pv power L1, L2, L3 - device list - mqtt pv 2](/screenshots/pv_power_L3_L2_L1_device-list_mqtt-pv-2.png)
 
 </details>
-
-
-## Supporting/Sponsoring this project
-
-You like the project and you want to support me?
-
-[<img src="https://github.md0.eu/uploads/donate-button.svg" height="50">](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
