@@ -144,7 +144,7 @@ def on_message(client, userdata, msg):
                 last_changed = int(time())
 
                 if 'pv' in jsonpayload:
-                    if type(jsonpayload['pv']) == dict and 'power' in jsonpayload['pv']:
+                    if isinstance(jsonpayload['pv'], dict) and 'power' in jsonpayload['pv']:
                         pv_power = float(jsonpayload['pv']['power'])
                         pv_current = float(jsonpayload['pv']['current']) if 'current' in jsonpayload['pv'] else pv_power/float(config['DEFAULT']['voltage'])
                         pv_voltage = float(jsonpayload['pv']['voltage']) if 'voltage' in jsonpayload['pv'] else float(config['DEFAULT']['voltage'])
@@ -188,8 +188,11 @@ def on_message(client, userdata, msg):
         logging.error("Received message is not a valid JSON. %s" % e)
         logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
-    except Exception as e:
-        logging.error("Exception occurred: %s" % e)
+    except Exception:
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        file = exception_traceback.tb_frame.f_code.co_filename
+        line = exception_traceback.tb_lineno
+        logging.error(f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}")
         logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
 
