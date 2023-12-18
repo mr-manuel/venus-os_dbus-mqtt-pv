@@ -287,13 +287,15 @@ class DbusMqttPvService:
             if pv_L3_power:
                 logging.debug("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
 
-            # is only displayed for Fronius inverters (product ID 0xA142)
-            # if power above 10 W, set status code to 9 (running)
-            if self._dbusservice['/StatusCode'] != 7 and self._dbusservice['/Ac/Power'] > 10:
-                self._dbusservice['/StatusCode'] = 7
+            # is only displayed for Fronius inverters (product ID 0xA142) in GUI but displayed in VRM portal
+            # if power above 10 W, set status code to 7 (running)
+            if self._dbusservice['/Ac/Power'] >= 10:
+                if self._dbusservice['/StatusCode'] != 7:
+                    self._dbusservice['/StatusCode'] = 7
             # else set status code to 8 (standby)
-            elif self._dbusservice['/StatusCode'] != 8:
-                self._dbusservice['/StatusCode'] = 8
+            else:
+                if self._dbusservice['/StatusCode'] != 8:
+                    self._dbusservice['/StatusCode'] = 8
 
             last_updated = last_changed
 

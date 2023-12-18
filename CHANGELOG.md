@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.5
+* Changed: Fixed status flapping between running and standby
+
 ## v0.1.4
 * Added: Frequency
 * Added: StatusCode: 7 = Running; 8 = Standby
