@@ -1,6 +1,7 @@
 # Changelog
 
 ## v0.1.5
+* Added: Timeout on driver startup. Prevents problems, if the MQTT broker is not reachable on driver startup
 * Changed: Fixed status flapping between running and standby
 
 ## v0.1.4
