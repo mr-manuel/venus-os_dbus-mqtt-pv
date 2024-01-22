@@ -126,9 +126,47 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 
 ### Install
 
-1. Copy the `dbus-mqtt-pv` folder to `/data/etc` on your Venus OS device
+1. Login to your Venus OS device via SSH. See [Venus OS:Root Access](https://www.victronenergy.com/live/ccgx:root_access#root_access) for more details.
 
-2. Run `bash /data/etc/dbus-mqtt-pv/install.sh` as root
+2. Execute this commands to download and extract the files:
+
+    ```bash
+    # change to temp folder
+    cd /tmp
+
+    # download driver
+    wget -O /tmp/venus-os_dbus-mqtt-pv.zip https://github.com/mr-manuel/venus-os_dbus-mqtt-pv/archive/refs/heads/master.zip
+
+    # If updating: cleanup old folder
+    rm -rf /tmp/venus-os_dbus-mqtt-pv-master
+
+    # unzip folder
+    unzip venus-os_dbus-mqtt-pv.zip
+
+    # If updating: backup existing config file
+    mv /data/etc/dbus-mqtt-pv/config.ini /data/etc/dbus-mqtt-pv_config.ini
+
+    # If updating: cleanup existing driver
+    rm -rf /data/etc/dbus-mqtt-pv
+
+    # copy files
+    cp -R /tmp/venus-os_dbus-mqtt-pv-master/dbus-mqtt-pv/ /data/etc/
+
+    # If updating: restore existing config file
+    mv /data/etc/dbus-mqtt-pv_config.ini /data/etc/dbus-mqtt-pv/config.ini
+    ```
+
+3. Copy the sample config file, if you are installing the driver for the first time and edit it to your needs.
+
+    ```bash
+    # copy default config file
+    cp /data/etc/dbus-mqtt-pv/config.sample.ini /data/etc/dbus-mqtt-pv/config.ini
+
+    # edit the config file with nano
+    nano /data/etc/dbus-mqtt-pv/config.ini
+    ```
+
+4. Run `bash /data/etc/dbus-mqtt-pv/install.sh` to install the driver as service.
 
    The daemon-tools should start this service automatically within seconds.
 
