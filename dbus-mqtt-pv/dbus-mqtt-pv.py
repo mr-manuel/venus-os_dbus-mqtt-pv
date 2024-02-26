@@ -222,7 +222,7 @@ class DbusMqttPvService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.1.5 (20231218)')
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.6 (20240226)')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -258,7 +258,8 @@ class DbusMqttPvService:
                 self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2) if pv_L1_voltage is not None else None
                 self._dbusservice['/Ac/L1/Frequency'] = round(pv_L1_frequency, 2) if pv_L1_frequency is not None else None
                 self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2) if pv_L1_forward is not None else None
-            else:
+            # at least one phase is needed to work properly
+            elif pv_L2_power is None and pv_L3_power is None:
                 self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2) if pv_power is not None else None
                 self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2) if pv_current is not None else None
                 self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2) if pv_voltage is not None else None
@@ -389,35 +390,35 @@ def main():
         '/Ac/Voltage': {'initial': 0, 'textformat': _v},
         '/Ac/Energy/Forward': {'initial': None, 'textformat': _kwh},
 
-        '/Ac/L1/Power': {'initial': 0, 'textformat': _w},
-        '/Ac/L1/Current': {'initial': 0, 'textformat': _a},
-        '/Ac/L1/Voltage': {'initial': 0, 'textformat': _v},
-        '/Ac/L1/Frequency': {'initial': None, 'textformat': _hz},
-        '/Ac/L1/Energy/Forward': {'initial': None, 'textformat': _kwh},
-
         '/Ac/MaxPower': {'initial': int(config['PV']['max']), 'textformat': _w},
         '/Ac/Position': {'initial': int(config['PV']['position']), 'textformat': _n},
         '/Ac/StatusCode': {'initial': 0, 'textformat': _n},
         '/UpdateIndex': {'initial': 0, 'textformat': _n},
     }
 
-    if pv_L2_power is not None:
-        paths_dbus.update({
-            '/Ac/L2/Power': {'initial': 0, 'textformat': _w},
-            '/Ac/L2/Current': {'initial': 0, 'textformat': _a},
-            '/Ac/L2/Voltage': {'initial': 0, 'textformat': _v},
-            '/Ac/L2/Frequency': {'initial': None, 'textformat': _hz},
-            '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
-        })
+    paths_dbus.update({
+        '/Ac/L1/Power': {'initial': None, 'textformat': _w},
+        '/Ac/L1/Current': {'initial': None, 'textformat': _a},
+        '/Ac/L1/Voltage': {'initial': None, 'textformat': _v},
+        '/Ac/L1/Frequency': {'initial': None, 'textformat': _hz},
+        '/Ac/L1/Energy/Forward': {'initial': None, 'textformat': _kwh},
+    })
 
-    if pv_L3_power is not None:
-        paths_dbus.update({
-            '/Ac/L3/Power': {'initial': 0, 'textformat': _w},
-            '/Ac/L3/Current': {'initial': 0, 'textformat': _a},
-            '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},
-            '/Ac/L3/Frequency': {'initial': None, 'textformat': _hz},
-            '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh},
-        })
+    paths_dbus.update({
+        '/Ac/L2/Power': {'initial': None, 'textformat': _w},
+        '/Ac/L2/Current': {'initial': None, 'textformat': _a},
+        '/Ac/L2/Voltage': {'initial': None, 'textformat': _v},
+        '/Ac/L2/Frequency': {'initial': None, 'textformat': _hz},
+        '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
+    })
+
+    paths_dbus.update({
+        '/Ac/L3/Power': {'initial': None, 'textformat': _w},
+        '/Ac/L3/Current': {'initial': None, 'textformat': _a},
+        '/Ac/L3/Voltage': {'initial': None, 'textformat': _v},
+        '/Ac/L3/Frequency': {'initial': None, 'textformat': _hz},
+        '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh},
+    })
 
     DbusMqttPvService(
         servicename='com.victronenergy.pvinverter.mqtt_pv_' + str(config['MQTT']['device_instance']),

@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.1.6
+* Changed: Allow to populate only L2 and/or L3 even if L1 is missing
+
 ## v0.1.5
 * Added: Timeout on driver startup. Prevents problems, if the MQTT broker is not reachable on driver startup
 * Changed: Fixed status flapping between running and standby
