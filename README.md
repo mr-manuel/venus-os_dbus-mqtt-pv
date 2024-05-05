@@ -206,7 +206,7 @@ It's possible to have multiple instances, but it's not automated. Follow these s
     sed -i 's:dbus-mqtt-pv:'$driverclone':g' /data/etc/$driverclone/service/log/run
     ```
 
-5. Change the `device_name` and increase the `device_instance` in the `config.ini`
+5. Change the `device_name`, increase the `device_instance` and update the `topic` in the `config.ini`
 
 Now you can install and run the cloned driver. Should you need another instance just increase the number in step 1 and repeat all steps.
 
