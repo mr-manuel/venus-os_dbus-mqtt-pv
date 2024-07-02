@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.7
+* Changed: Update `energy_forward` only if it was received
+* Changed: Fixed problems when timeout was set to `0`.
+
 ## v0.1.6
 * Changed: Allow to populate only L2 and/or L3 even if L1 is missing
 
