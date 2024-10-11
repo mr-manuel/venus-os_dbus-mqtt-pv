@@ -2,29 +2,46 @@
 
 <small>GitHub repository: [mr-manuel/venus-os_dbus-mqtt-pv](https://github.com/mr-manuel/venus-os_dbus-mqtt-pv)</small>
 
-### Disclaimer
+## Index
+
+1. [Disclaimer](#disclaimer)
+1. [Supporting/Sponsoring this project](#supportingsponsoring-this-project)
+1. [Purpose](#purpose)
+1. [Config](#config)
+1. [JSON structure](#json-structure)
+1. [Home Assistant](#home-assistant)
+1. [Install](#install)
+1. [Uninstall](#uninstall)
+1. [Restart](#restart)
+1. [Debugging](#debugging)
+1. [Multiple instances](#multiple-instances)
+1. [Compatibility](#compatibility)
+1. [Screenshots](#screenshots)
+
+
+## Disclaimer
 
 I wrote this script for myself. I'm not responsible, if you damage something using my script.
 
 
-### Supporting/Sponsoring this project
+## Supporting/Sponsoring this project
 
 You like the project and you want to support me?
 
 [<img src="https://github.md0.eu/uploads/donate-button.svg" height="50">](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
 
 
-### Purpose
+## Purpose
 
 The script emulates a Photovoltaic AC Inverter in Venus OS. It gets the MQTT data from a subscribed topic and publishes the information on the dbus as the service `com.victronenergy.pvinverter.mqtt_pv` with the VRM instance `51`.
 
 
-### Config
+## Config
 
 Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` folder and change it as you need it.
 
 
-### JSON structure
+## JSON structure
 
 <details><summary>Minimum required</summary>
 
@@ -124,7 +141,42 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 </details>
 
 
-### Install
+## Home Assistant
+
+This is only a simple example that can be reduced expanded to match the minimum or full requirements shown above.
+
+```yml
+alias: mqtt publish sensor pv power
+description: ""
+trigger:
+  - platform: state
+    entity_id: sensor.YOUR_PV_POWER_ENTITY
+condition: []
+action:
+  - service: mqtt.publish
+    data_template:
+      payload: |
+        {
+          "pv": {
+            "power": {{ (states('sensor.YOUR_PV_POWER_ENTITY') | float(0)) }},
+            "L1": {
+                "power": {{ (states('sensor.YOUR_PV_L1_POWER_ENTITY') | float(0)) }},
+            },
+            "L2": {
+                "power": {{ (states('sensor.YOUR_PV_L2_POWER_ENTITY') | float(0)) }},
+            },
+            "L3": {
+                "power": {{ (states('sensor.YOUR_PV_L3_POWER_ENTITY') | float(0)) }},
+            }
+          }
+        }
+      topic: homeassistant/energy/pv
+```
+
+In the `config.ini` of `dbus-mqtt-pv` set the MQTT broker to the Home Assistant hostname/IP and the topic to the same as in your Home Assistant config (like above).
+
+
+## Install
 
 1. Login to your Venus OS device via SSH. See [Venus OS:Root Access](https://www.victronenergy.com/live/ccgx:root_access#root_access) for more details.
 
@@ -170,15 +222,15 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 
    The daemon-tools should start this service automatically within seconds.
 
-### Uninstall
+## Uninstall
 
 Run `/data/etc/dbus-mqtt-pv/uninstall.sh`
 
-### Restart
+## Restart
 
 Run `/data/etc/dbus-mqtt-pv/restart.sh`
 
-### Debugging
+## Debugging
 
 The logs can be checked with `tail -n 100 -f /data/log/dbus-mqtt-pv/current | tai64nlocal`
 
@@ -190,7 +242,7 @@ If the seconds are under 5 then the service crashes and gets restarted all the t
 
 If the script stops with the message `dbus.exceptions.NameExistsException: Bus name already exists: com.victronenergy.pvinverter.mqtt_pv"` it means that the service is still running or another service is using that bus name.
 
-### Multiple instances
+## Multiple instances
 
 It's possible to have multiple instances, but it's not automated. Follow these steps to achieve this:
 
@@ -210,14 +262,14 @@ It's possible to have multiple instances, but it's not automated. Follow these s
 
 Now you can install and run the cloned driver. Should you need another instance just increase the number in step 1 and repeat all steps.
 
-### Compatibility
+## Compatibility
 
 It was tested on Venus OS Large `v2.92` on the following devices:
 
 * RaspberryPi 4b
 * MultiPlus II (GX Version)
 
-### Screenshots
+## Screenshots
 
 <details><summary>Power and/or L1</summary>
 
