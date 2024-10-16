@@ -119,21 +119,21 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
             "voltage": 0.0,
             "current": 0.0,
             "frequency": 0.0,
-            "energy_forward": 0.0,       --> Total/Lifetime produced energy in kWh
+            "energy_forward": 0.0       --> Total/Lifetime produced energy in kWh
         },
         "L2": {
             "power": 0.0,
             "voltage": 0.0,
             "current": 0.0,
             "frequency": 0.0,
-            "energy_forward": 0.0,       --> Total/Lifetime produced energy in kWh
+            "energy_forward": 0.0       --> Total/Lifetime produced energy in kWh
         },
         "L3": {
             "power": 0.0,
             "voltage": 0.0,
             "current": 0.0,
             "frequency": 0.0,
-            "energy_forward": 0.0,       --> Total/Lifetime produced energy in kWh
+            "energy_forward": 0.0       --> Total/Lifetime produced energy in kWh
         }
     }
 }
@@ -160,13 +160,13 @@ action:
           "pv": {
             "power": {{ (states('sensor.YOUR_PV_POWER_ENTITY') | float(0)) }},
             "L1": {
-                "power": {{ (states('sensor.YOUR_PV_L1_POWER_ENTITY') | float(0)) }},
+                "power": {{ (states('sensor.YOUR_PV_L1_POWER_ENTITY') | float(0)) }}
             },
             "L2": {
-                "power": {{ (states('sensor.YOUR_PV_L2_POWER_ENTITY') | float(0)) }},
+                "power": {{ (states('sensor.YOUR_PV_L2_POWER_ENTITY') | float(0)) }}
             },
             "L3": {
-                "power": {{ (states('sensor.YOUR_PV_L3_POWER_ENTITY') | float(0)) }},
+                "power": {{ (states('sensor.YOUR_PV_L3_POWER_ENTITY') | float(0)) }}
             }
           }
         }

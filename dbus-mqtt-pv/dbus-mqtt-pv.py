@@ -177,10 +177,10 @@ def on_message(client, userdata, msg):
                             if "energy_forward" in jsonpayload["pv"]["L3"]:
                                 pv_L3_forward = float(jsonpayload["pv"]["L3"]["energy_forward"])
                     else:
-                        logging.error('Received JSON MQTT message does not include a power object in the pv object. Expected at least: {"pv": {"power": 0.0}"}')
+                        logging.error('Received JSON MQTT message does not include a power object in the pv object. Expected at least: {"pv": {"power": 0.0}}')
                         logging.debug("MQTT payload: " + str(msg.payload)[1:])
                 else:
-                    logging.error('Received JSON MQTT message does not include a pv object. Expected at least: {"pv": {"power": 0.0}"}')
+                    logging.error('Received JSON MQTT message does not include a pv object. Expected at least: {"pv": {"power": 0.0}}')
                     logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
             else:
