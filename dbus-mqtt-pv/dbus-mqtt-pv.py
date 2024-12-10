@@ -388,46 +388,24 @@ def main():
     if "tls_enabled" in config["MQTT"] and config["MQTT"]["tls_enabled"] == "1":
         logging.info("MQTT client: TLS is enabled")
 
-        if (
-            "tls_path_to_ca" in config["MQTT"]
-            and config["MQTT"]["tls_path_to_ca"] != ""
-        ):
-            logging.info(
-                'MQTT client: TLS: custom ca "%s" used'
-                % config["MQTT"]["tls_path_to_ca"]
-            )
+        if "tls_path_to_ca" in config["MQTT"] and config["MQTT"]["tls_path_to_ca"] != "":
+            logging.info('MQTT client: TLS: custom ca "%s" used' % config["MQTT"]["tls_path_to_ca"])
             client.tls_set(config["MQTT"]["tls_path_to_ca"], tls_version=2)
         else:
             client.tls_set(tls_version=2)
 
         if "tls_insecure" in config["MQTT"] and config["MQTT"]["tls_insecure"] != "":
-            logging.info(
-                "MQTT client: TLS certificate server hostname verification disabled"
-            )
+            logging.info("MQTT client: TLS certificate server hostname verification disabled")
             client.tls_insecure_set(True)
 
     # check if username and password are set
-    if (
-        "username" in config["MQTT"]
-        and "password" in config["MQTT"]
-        and config["MQTT"]["username"] != ""
-        and config["MQTT"]["password"] != ""
-    ):
-        logging.info(
-            'MQTT client: Using username "%s" and password to connect'
-            % config["MQTT"]["username"]
-        )
-        client.username_pw_set(
-            username=config["MQTT"]["username"], password=config["MQTT"]["password"]
-        )
+    if "username" in config["MQTT"] and "password" in config["MQTT"] and config["MQTT"]["username"] != "" and config["MQTT"]["password"] != "":
+        logging.info('MQTT client: Using username "%s" and password to connect' % config["MQTT"]["username"])
+        client.username_pw_set(username=config["MQTT"]["username"], password=config["MQTT"]["password"])
 
     # connect to broker
-    logging.info(
-        f"MQTT client: Connecting to broker {config['MQTT']['broker_address']} on port {config['MQTT']['broker_port']}"
-    )
-    client.connect(
-        host=config["MQTT"]["broker_address"], port=int(config["MQTT"]["broker_port"])
-    )
+    logging.info(f"MQTT client: Connecting to broker {config['MQTT']['broker_address']} on port {config['MQTT']['broker_port']}")
+    client.connect(host=config["MQTT"]["broker_address"], port=int(config["MQTT"]["broker_port"]))
     client.loop_start()
 
     # wait to receive first data, else the JSON is empty and phase setup won't work
