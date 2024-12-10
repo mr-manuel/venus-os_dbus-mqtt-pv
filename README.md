@@ -42,6 +42,8 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 
 ## JSON structure
 
+### Generic version
+
 <details><summary>Minimum required</summary>
 
 ```json
@@ -139,6 +141,20 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 ```
 </details>
 
+### Shelly version (Gen 2+)
+
+```json
+ {
+    "apower": 0.0, 
+    "voltage": ..., 
+    "current": ..., 
+    "freq": ..., 
+    "aenergy": { 
+        "total": ... 
+    }
+}
+```
+In the `config.ini` file, set `shelly = true`, and set your shelly device to use the same topic as the one configured in `config.ini`. Don't forget to enable MQTT on your Shelly device and correctly set the host, port and topic.
 
 ## Home Assistant
 
