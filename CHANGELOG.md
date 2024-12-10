@@ -1,5 +1,8 @@
 # Changelog
 
+## 2024-12-10 by jjdejong
+* Added direct support for Shelly gen2+ devices
+
 ## v1.0.9-dev
 * Changed: Broker port missing on reconnect
 * Changed: Default device instance is now `100`

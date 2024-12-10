@@ -135,6 +135,9 @@ def on_message(client, userdata, msg):
         global pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_frequency, pv_L2_forward
         global pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_frequency, pv_L3_forward
 
+        # Check if Shelly mode is enabled
+        shelly_mode = config.get('DEFAULT', 'shelly', fallback='false').lower() == 'true'
+
         # get JSON from topic
         if msg.topic == config["MQTT"]["topic"]:
             if msg.payload != "" and msg.payload != b"":
@@ -142,46 +145,78 @@ def on_message(client, userdata, msg):
 
                 last_changed = int(time())
 
-                if "pv" in jsonpayload:
-                    if isinstance(jsonpayload["pv"], dict) and "power" in jsonpayload["pv"]:
-                        pv_power = float(jsonpayload["pv"]["power"])
-                        pv_current = float(jsonpayload["pv"]["current"]) if "current" in jsonpayload["pv"] else pv_power / float(config["DEFAULT"]["voltage"])
-                        pv_voltage = float(jsonpayload["pv"]["voltage"]) if "voltage" in jsonpayload["pv"] else float(config["DEFAULT"]["voltage"])
-                        if "energy_forward" in jsonpayload["pv"]:
-                            pv_forward = float(jsonpayload["pv"]["energy_forward"])
+                # Shelly-specific payload parsing
+                if shelly_mode:
+                    if "apower" in jsonpayload:
+                        pv_power = float(jsonpayload.get("apower", 0))
+                        
+                        pv_current = float(jsonpayload.get("current", pv_power / float(config["DEFAULT"]["voltage"])))
+                        pv_voltage = float(jsonpayload.get("voltage", float(config["DEFAULT"]["voltage"])))
+                        pv_forward = float(jsonpayload.get("aenergy", {}).get("total", 0)) / 1000 if "aenergy" in jsonpayload else None
+                        
+                        pv_L1_power = pv_power
+                        pv_L1_current = pv_current
+                        pv_L1_voltage = pv_voltage
+                        pv_L1_frequency = float(jsonpayload.get("freq", float(config["DEFAULT"]["frequency"])))
+                        pv_L1_forward = pv_forward
 
-                        # check if L1 and L1 -> power exists
-                        if "L1" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L1"]:
-                            pv_L1_power = float(jsonpayload["pv"]["L1"]["power"])
-                            pv_L1_current = float(jsonpayload["pv"]["L1"]["current"]) if "current" in jsonpayload["pv"]["L1"] else pv_L1_power / float(config["DEFAULT"]["voltage"])
-                            pv_L1_voltage = float(jsonpayload["pv"]["L1"]["voltage"]) if "voltage" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["voltage"])
-                            pv_L1_frequency = float(jsonpayload["pv"]["L1"]["frequency"]) if "frequency" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["frequency"])
-                            if "energy_forward" in jsonpayload["pv"]["L1"]:
-                                pv_L1_forward = float(jsonpayload["pv"]["L1"]["energy_forward"])
+                        # Clear multi-phase values
+                        pv_L2_power = None
+                        pv_L2_current = None
+                        pv_L2_voltage = None
+                        pv_L2_frequency = None
+                        pv_L2_forward = None
 
-                        # check if L2 and L2 -> power exists
-                        if "L2" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L2"]:
-                            pv_L2_power = float(jsonpayload["pv"]["L2"]["power"])
-                            pv_L2_current = float(jsonpayload["pv"]["L2"]["current"]) if "current" in jsonpayload["pv"]["L2"] else pv_L2_power / float(config["DEFAULT"]["voltage"])
-                            pv_L2_voltage = float(jsonpayload["pv"]["L2"]["voltage"]) if "voltage" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["voltage"])
-                            pv_L2_frequency = float(jsonpayload["pv"]["L2"]["frequency"]) if "frequency" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["frequency"])
-                            if "energy_forward" in jsonpayload["pv"]["L2"]:
-                                pv_L2_forward = float(jsonpayload["pv"]["L2"]["energy_forward"])
+                        pv_L3_power = None
+                        pv_L3_current = None
+                        pv_L3_voltage = None
+                        pv_L3_frequency = None
+                        pv_L3_forward = None
 
-                        # check if L3 and L3 -> power exists
-                        if "L3" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L3"]:
-                            pv_L3_power = float(jsonpayload["pv"]["L3"]["power"])
-                            pv_L3_current = float(jsonpayload["pv"]["L3"]["current"]) if "current" in jsonpayload["pv"]["L3"] else pv_L3_power / float(config["DEFAULT"]["voltage"])
-                            pv_L3_voltage = float(jsonpayload["pv"]["L3"]["voltage"]) if "voltage" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["voltage"])
-                            pv_L3_frequency = float(jsonpayload["pv"]["L3"]["frequency"]) if "frequency" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["frequency"])
-                            if "energy_forward" in jsonpayload["pv"]["L3"]:
-                                pv_L3_forward = float(jsonpayload["pv"]["L3"]["energy_forward"])
                     else:
-                        logging.error('Received JSON MQTT message does not include a power object in the pv object. Expected at least: {"pv": {"power": 0.0}}')
-                        logging.debug("MQTT payload: " + str(msg.payload)[1:])
+                        logging.error('Received Shelly JSON MQTT message does not include apower. Expected at least: {"apower": 0.0}')
+                
                 else:
-                    logging.error('Received JSON MQTT message does not include a pv object. Expected at least: {"pv": {"power": 0.0}}')
-                    logging.debug("MQTT payload: " + str(msg.payload)[1:])
+                    if "pv" in jsonpayload:
+                        if isinstance(jsonpayload["pv"], dict) and "power" in jsonpayload["pv"]:
+                            pv_power = float(jsonpayload["pv"]["power"])
+                            pv_current = float(jsonpayload["pv"]["current"]) if "current" in jsonpayload["pv"] else pv_power / float(config["DEFAULT"]["voltage"])
+                            pv_voltage = float(jsonpayload["pv"]["voltage"]) if "voltage" in jsonpayload["pv"] else float(config["DEFAULT"]["voltage"])
+                            if "energy_forward" in jsonpayload["pv"]:
+                                pv_forward = float(jsonpayload["pv"]["energy_forward"])
+
+                                # check if L1 and L1 -> power exists
+                            if "L1" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L1"]:
+                                pv_L1_power = float(jsonpayload["pv"]["L1"]["power"])
+                                pv_L1_current = float(jsonpayload["pv"]["L1"]["current"]) if "current" in jsonpayload["pv"]["L1"] else pv_L1_power / float(config["DEFAULT"]["voltage"])
+                                pv_L1_voltage = float(jsonpayload["pv"]["L1"]["voltage"]) if "voltage" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["voltage"])
+                                pv_L1_frequency = float(jsonpayload["pv"]["L1"]["frequency"]) if "frequency" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["frequency"])
+                                if "energy_forward" in jsonpayload["pv"]["L1"]:
+                                    pv_L1_forward = float(jsonpayload["pv"]["L1"]["energy_forward"])
+
+                                # check if L2 and L2 -> power exists
+                            if "L2" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L2"]:
+                                pv_L2_power = float(jsonpayload["pv"]["L2"]["power"])
+                                pv_L2_current = float(jsonpayload["pv"]["L2"]["current"]) if "current" in jsonpayload["pv"]["L2"] else pv_L2_power / float(config["DEFAULT"]["voltage"])
+                                pv_L2_voltage = float(jsonpayload["pv"]["L2"]["voltage"]) if "voltage" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["voltage"])
+                                pv_L2_frequency = float(jsonpayload["pv"]["L2"]["frequency"]) if "frequency" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["frequency"])
+                                if "energy_forward" in jsonpayload["pv"]["L2"]:
+                                    pv_L2_forward = float(jsonpayload["pv"]["L2"]["energy_forward"])
+
+                                # check if L3 and L3 -> power exists
+                            if "L3" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L3"]:
+                                pv_L3_power = float(jsonpayload["pv"]["L3"]["power"])
+                                pv_L3_current = float(jsonpayload["pv"]["L3"]["current"]) if "current" in jsonpayload["pv"]["L3"] else pv_L3_power / float(config["DEFAULT"]["voltage"])
+                                pv_L3_voltage = float(jsonpayload["pv"]["L3"]["voltage"]) if "voltage" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["voltage"])
+                                pv_L3_frequency = float(jsonpayload["pv"]["L3"]["frequency"]) if "frequency" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["frequency"])
+                                if "energy_forward" in jsonpayload["pv"]["L3"]:
+                                    pv_L3_forward = float(jsonpayload["pv"]["L3"]["energy_forward"])
+                        else:
+                            logging.error('Received JSON MQTT message does not include a power object in the pv object. Expected at least: {"pv": {"power": 0.0}}')
+                            logging.debug("MQTT payload: " + str(msg.payload)[1:])
+                    else:
+                        logging.error('Received JSON MQTT message does not include a pv object. Expected at least: {"pv": {"power": 0.0}}')
+                        logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
             else:
                 logging.warning("Received JSON MQTT message was empty and therefore it was ignored")
