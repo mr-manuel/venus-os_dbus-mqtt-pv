@@ -1,6 +1,7 @@
 # Changelog
 
 ## v1.0.9-dev
+* Added: Power factor
 * Changed: Broker port missing on reconnect
 * Changed: Default device instance is now `100`
 * Changed: Fixed service not starting sometimes

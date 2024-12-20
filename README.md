@@ -118,6 +118,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
             "voltage": 0.0,
             "current": 0.0,
             "frequency": 0.0,
+            "power_factor": 0.0,
             "energy_forward": 0.0       --> Total/Lifetime produced energy in kWh
         },
         "L2": {
@@ -125,6 +126,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
             "voltage": 0.0,
             "current": 0.0,
             "frequency": 0.0,
+            "power_factor": 0.0,
             "energy_forward": 0.0       --> Total/Lifetime produced energy in kWh
         },
         "L3": {
@@ -132,6 +134,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
             "voltage": 0.0,
             "current": 0.0,
             "frequency": 0.0,
+            "power_factor": 0.0,
             "energy_forward": 0.0       --> Total/Lifetime produced energy in kWh
         }
     }

@@ -81,18 +81,21 @@ pv_L1_power = None
 pv_L1_current = None
 pv_L1_voltage = None
 pv_L1_frequency = None
+pv_L1_power_factor = None
 pv_L1_forward = None
 
 pv_L2_power = None
 pv_L2_current = None
 pv_L2_voltage = None
 pv_L2_frequency = None
+pv_L2_power_factor = None
 pv_L2_forward = None
 
 pv_L3_power = None
 pv_L3_current = None
 pv_L3_voltage = None
 pv_L3_frequency = None
+pv_L3_power_factor = None
 pv_L3_forward = None
 
 
@@ -131,9 +134,9 @@ def on_message(client, userdata, msg):
     try:
 
         global last_changed, pv_power, pv_current, pv_voltage, pv_forward
-        global pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_frequency, pv_L1_forward
-        global pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_frequency, pv_L2_forward
-        global pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_frequency, pv_L3_forward
+        global pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_frequency, pv_L1_power_factor, pv_L1_forward
+        global pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_frequency, pv_L2_power_factor, pv_L2_forward
+        global pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_frequency, pv_L3_power_factor, pv_L3_forward
 
         # get JSON from topic
         if msg.topic == config["MQTT"]["topic"]:
@@ -156,6 +159,7 @@ def on_message(client, userdata, msg):
                             pv_L1_current = float(jsonpayload["pv"]["L1"]["current"]) if "current" in jsonpayload["pv"]["L1"] else pv_L1_power / float(config["DEFAULT"]["voltage"])
                             pv_L1_voltage = float(jsonpayload["pv"]["L1"]["voltage"]) if "voltage" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["voltage"])
                             pv_L1_frequency = float(jsonpayload["pv"]["L1"]["frequency"]) if "frequency" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["frequency"])
+                            pv_L1_power_factor = float(jsonpayload["pv"]["L1"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L1"] else None
                             if "energy_forward" in jsonpayload["pv"]["L1"]:
                                 pv_L1_forward = float(jsonpayload["pv"]["L1"]["energy_forward"])
 
@@ -165,6 +169,7 @@ def on_message(client, userdata, msg):
                             pv_L2_current = float(jsonpayload["pv"]["L2"]["current"]) if "current" in jsonpayload["pv"]["L2"] else pv_L2_power / float(config["DEFAULT"]["voltage"])
                             pv_L2_voltage = float(jsonpayload["pv"]["L2"]["voltage"]) if "voltage" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["voltage"])
                             pv_L2_frequency = float(jsonpayload["pv"]["L2"]["frequency"]) if "frequency" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["frequency"])
+                            pv_L2_power_factor = float(jsonpayload["pv"]["L2"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L2"] else None
                             if "energy_forward" in jsonpayload["pv"]["L2"]:
                                 pv_L2_forward = float(jsonpayload["pv"]["L2"]["energy_forward"])
 
@@ -174,6 +179,7 @@ def on_message(client, userdata, msg):
                             pv_L3_current = float(jsonpayload["pv"]["L3"]["current"]) if "current" in jsonpayload["pv"]["L3"] else pv_L3_power / float(config["DEFAULT"]["voltage"])
                             pv_L3_voltage = float(jsonpayload["pv"]["L3"]["voltage"]) if "voltage" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["voltage"])
                             pv_L3_frequency = float(jsonpayload["pv"]["L3"]["frequency"]) if "frequency" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["frequency"])
+                            pv_L3_power_factor = float(jsonpayload["pv"]["L3"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L3"] else None
                             if "energy_forward" in jsonpayload["pv"]["L3"]:
                                 pv_L3_forward = float(jsonpayload["pv"]["L3"]["energy_forward"])
                     else:
@@ -273,6 +279,7 @@ class DbusMqttPvService:
                 self._dbusservice["/Ac/L1/Current"] = round(pv_L1_current, 2) if pv_L1_current is not None else None
                 self._dbusservice["/Ac/L1/Voltage"] = round(pv_L1_voltage, 2) if pv_L1_voltage is not None else None
                 self._dbusservice["/Ac/L1/Frequency"] = round(pv_L1_frequency, 2) if pv_L1_frequency is not None else None
+                self._dbusservice["/Ac/L1/PowerFactor"] = round(pv_L1_power_factor, 3) if pv_L1_power_factor is not None else None
                 self._dbusservice["/Ac/L1/Energy/Forward"] = round(pv_L1_forward, 2) if pv_L1_forward is not None else None
             # at least one phase is needed to work properly
             elif pv_L2_power is None and pv_L3_power is None:
@@ -287,6 +294,7 @@ class DbusMqttPvService:
                 self._dbusservice["/Ac/L2/Current"] = round(pv_L2_current, 2) if pv_L2_current is not None else None
                 self._dbusservice["/Ac/L2/Voltage"] = round(pv_L2_voltage, 2) if pv_L2_voltage is not None else None
                 self._dbusservice["/Ac/L2/Frequency"] = round(pv_L2_frequency, 2) if pv_L2_frequency is not None else None
+                self._dbusservice["/Ac/L2/PowerFactor"] = round(pv_L2_power_factor, 3) if pv_L2_power_factor is not None else None
                 self._dbusservice["/Ac/L2/Energy/Forward"] = round(pv_L2_forward, 2) if pv_L2_forward is not None else None
 
             if pv_L3_power is not None:
@@ -294,6 +302,7 @@ class DbusMqttPvService:
                 self._dbusservice["/Ac/L3/Current"] = round(pv_L3_current, 2) if pv_L3_current is not None else None
                 self._dbusservice["/Ac/L3/Voltage"] = round(pv_L3_voltage, 2) if pv_L3_voltage is not None else None
                 self._dbusservice["/Ac/L3/Frequency"] = round(pv_L3_frequency, 2) if pv_L3_frequency is not None else None
+                self._dbusservice["/Ac/L3/PowerFactor"] = round(pv_L3_power_factor, 3) if pv_L3_power_factor is not None else None
                 self._dbusservice["/Ac/L3/Energy/Forward"] = round(pv_L3_forward, 2) if pv_L3_forward is not None else None
 
             logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
@@ -425,6 +434,7 @@ def main():
             "/Ac/L1/Current": {"initial": None, "textformat": _a},
             "/Ac/L1/Voltage": {"initial": None, "textformat": _v},
             "/Ac/L1/Frequency": {"initial": None, "textformat": _hz},
+            "/Ac/L1/PowerFactor": {"initial": None, "textformat": _n},
             "/Ac/L1/Energy/Forward": {"initial": None, "textformat": _kwh},
         }
     )
@@ -435,6 +445,7 @@ def main():
             "/Ac/L2/Current": {"initial": None, "textformat": _a},
             "/Ac/L2/Voltage": {"initial": None, "textformat": _v},
             "/Ac/L2/Frequency": {"initial": None, "textformat": _hz},
+            "/Ac/L2/PowerFactor": {"initial": None, "textformat": _n},
             "/Ac/L2/Energy/Forward": {"initial": None, "textformat": _kwh},
         }
     )
@@ -445,6 +456,7 @@ def main():
             "/Ac/L3/Current": {"initial": None, "textformat": _a},
             "/Ac/L3/Voltage": {"initial": None, "textformat": _v},
             "/Ac/L3/Frequency": {"initial": None, "textformat": _hz},
+            "/Ac/L3/PowerFactor": {"initial": None, "textformat": _n},
             "/Ac/L3/Energy/Forward": {"initial": None, "textformat": _kwh},
         }
     )
