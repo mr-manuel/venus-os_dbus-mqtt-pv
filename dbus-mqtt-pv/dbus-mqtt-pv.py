@@ -185,6 +185,34 @@ def on_message(client, userdata, msg):
                     else:
                         logging.error('Received JSON MQTT message does not include a power object in the pv object. Expected at least: {"pv": {"power": 0.0}}')
                         logging.debug("MQTT payload: " + str(msg.payload)[1:])
+
+                elif "apower" in jsonpayload:
+                    pv_power = float(jsonpayload.get("apower", 0))
+
+                    pv_current = float(jsonpayload.get("current", pv_power / float(config["DEFAULT"]["voltage"])))
+                    pv_voltage = float(jsonpayload.get("voltage", float(config["DEFAULT"]["voltage"])))
+                    pv_forward = float(jsonpayload.get("aenergy").get("total")) / 1000 if "aenergy" in jsonpayload and "total" in jsonpayload["aenergy"] else None
+
+                    pv_L1_power = pv_power
+                    pv_L1_current = pv_current
+                    pv_L1_voltage = pv_voltage
+                    pv_L1_frequency = float(jsonpayload.get("freq", float(config["DEFAULT"]["frequency"])))
+                    pv_L1_power_factor = float(jsonpayload.get("pf")) if "pf" in jsonpayload else None
+                    pv_L1_forward = pv_forward
+
+                    # Clear multi-phase values
+                    pv_L2_power = None
+                    pv_L2_current = None
+                    pv_L2_voltage = None
+                    pv_L2_frequency = None
+                    pv_L2_forward = None
+
+                    pv_L3_power = None
+                    pv_L3_current = None
+                    pv_L3_voltage = None
+                    pv_L3_frequency = None
+                    pv_L3_forward = None
+
                 else:
                     logging.error('Received JSON MQTT message does not include a pv object. Expected at least: {"pv": {"power": 0.0}}')
                     logging.debug("MQTT payload: " + str(msg.payload)[1:])

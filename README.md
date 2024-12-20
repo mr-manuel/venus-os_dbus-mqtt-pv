@@ -42,6 +42,8 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 
 ## JSON structure
 
+### Generic device
+
 <details><summary>Minimum required</summary>
 
 ```json
@@ -143,7 +145,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 </details>
 
 
-## Home Assistant
+### Home Assistant
 
 This is only a simple example that can be reduced expanded to match the minimum or full requirements shown above.
 
@@ -176,6 +178,24 @@ action:
 ```
 
 In the `config.ini` of `dbus-mqtt-pv` set the MQTT broker to the Home Assistant hostname/IP and the topic to the same as in your Home Assistant config (like above).
+
+
+### Shelly (Gen 2+)
+
+```json
+ {
+    "apower": 0.0,
+    "voltage": 0.0,
+    "freq": 0,
+    "current": 0.000,
+    "pf": 0,
+    "aenergy": {
+        "total": 0.000
+    }
+}
+```
+
+Ensure your Shelly device uses the same topic as configured in `config.ini`. Enable MQTT on your Shelly device and set the host, port, and topic correctly.
 
 
 ## Install / Update
