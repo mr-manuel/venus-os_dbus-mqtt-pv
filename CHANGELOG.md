@@ -3,6 +3,7 @@
 ## v1.0.9-dev
 * Added: Power factor
 * Added: Shelly Gen2+ device support by @jjdejong
+* Added: Tasmota device support
 * Changed: Broker port missing on reconnect
 * Changed: Default device instance is now `100`
 * Changed: Fixed service not starting sometimes

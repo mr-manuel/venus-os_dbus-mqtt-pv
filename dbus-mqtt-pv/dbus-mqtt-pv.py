@@ -146,42 +146,64 @@ def on_message(client, userdata, msg):
                 last_changed = int(time())
 
                 if "pv" in jsonpayload:
-                    if isinstance(jsonpayload["pv"], dict) and "power" in jsonpayload["pv"]:
-                        pv_power = float(jsonpayload["pv"]["power"])
-                        pv_current = float(jsonpayload["pv"]["current"]) if "current" in jsonpayload["pv"] else pv_power / float(config["DEFAULT"]["voltage"])
-                        pv_voltage = float(jsonpayload["pv"]["voltage"]) if "voltage" in jsonpayload["pv"] else float(config["DEFAULT"]["voltage"])
-                        if "energy_forward" in jsonpayload["pv"]:
-                            pv_forward = float(jsonpayload["pv"]["energy_forward"])
+                    if isinstance(jsonpayload["pv"], dict):
+                        if "power" in jsonpayload["pv"]:
+                            pv_power = float(jsonpayload["pv"]["power"])
+                            pv_current = float(jsonpayload["pv"]["current"]) if "current" in jsonpayload["pv"] else pv_power / float(config["DEFAULT"]["voltage"])
+                            pv_voltage = float(jsonpayload["pv"]["voltage"]) if "voltage" in jsonpayload["pv"] else float(config["DEFAULT"]["voltage"])
+                            if "energy_forward" in jsonpayload["pv"]:
+                                pv_forward = float(jsonpayload["pv"]["energy_forward"])
 
-                        # check if L1 and L1 -> power exists
-                        if "L1" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L1"]:
-                            pv_L1_power = float(jsonpayload["pv"]["L1"]["power"])
-                            pv_L1_current = float(jsonpayload["pv"]["L1"]["current"]) if "current" in jsonpayload["pv"]["L1"] else pv_L1_power / float(config["DEFAULT"]["voltage"])
-                            pv_L1_voltage = float(jsonpayload["pv"]["L1"]["voltage"]) if "voltage" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["voltage"])
-                            pv_L1_frequency = float(jsonpayload["pv"]["L1"]["frequency"]) if "frequency" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["frequency"])
-                            pv_L1_power_factor = float(jsonpayload["pv"]["L1"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L1"] else None
-                            if "energy_forward" in jsonpayload["pv"]["L1"]:
-                                pv_L1_forward = float(jsonpayload["pv"]["L1"]["energy_forward"])
+                            # check if L1 and L1 -> power exists
+                            if "L1" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L1"]:
+                                pv_L1_power = float(jsonpayload["pv"]["L1"]["power"])
+                                pv_L1_current = float(jsonpayload["pv"]["L1"]["current"]) if "current" in jsonpayload["pv"]["L1"] else pv_L1_power / float(config["DEFAULT"]["voltage"])
+                                pv_L1_voltage = float(jsonpayload["pv"]["L1"]["voltage"]) if "voltage" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["voltage"])
+                                pv_L1_frequency = float(jsonpayload["pv"]["L1"]["frequency"]) if "frequency" in jsonpayload["pv"]["L1"] else float(config["DEFAULT"]["frequency"])
+                                pv_L1_power_factor = float(jsonpayload["pv"]["L1"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L1"] else None
+                                if "energy_forward" in jsonpayload["pv"]["L1"]:
+                                    pv_L1_forward = float(jsonpayload["pv"]["L1"]["energy_forward"])
 
-                        # check if L2 and L2 -> power exists
-                        if "L2" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L2"]:
-                            pv_L2_power = float(jsonpayload["pv"]["L2"]["power"])
-                            pv_L2_current = float(jsonpayload["pv"]["L2"]["current"]) if "current" in jsonpayload["pv"]["L2"] else pv_L2_power / float(config["DEFAULT"]["voltage"])
-                            pv_L2_voltage = float(jsonpayload["pv"]["L2"]["voltage"]) if "voltage" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["voltage"])
-                            pv_L2_frequency = float(jsonpayload["pv"]["L2"]["frequency"]) if "frequency" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["frequency"])
-                            pv_L2_power_factor = float(jsonpayload["pv"]["L2"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L2"] else None
-                            if "energy_forward" in jsonpayload["pv"]["L2"]:
-                                pv_L2_forward = float(jsonpayload["pv"]["L2"]["energy_forward"])
+                            # check if L2 and L2 -> power exists
+                            if "L2" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L2"]:
+                                pv_L2_power = float(jsonpayload["pv"]["L2"]["power"])
+                                pv_L2_current = float(jsonpayload["pv"]["L2"]["current"]) if "current" in jsonpayload["pv"]["L2"] else pv_L2_power / float(config["DEFAULT"]["voltage"])
+                                pv_L2_voltage = float(jsonpayload["pv"]["L2"]["voltage"]) if "voltage" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["voltage"])
+                                pv_L2_frequency = float(jsonpayload["pv"]["L2"]["frequency"]) if "frequency" in jsonpayload["pv"]["L2"] else float(config["DEFAULT"]["frequency"])
+                                pv_L2_power_factor = float(jsonpayload["pv"]["L2"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L2"] else None
+                                if "energy_forward" in jsonpayload["pv"]["L2"]:
+                                    pv_L2_forward = float(jsonpayload["pv"]["L2"]["energy_forward"])
 
-                        # check if L3 and L3 -> power exists
-                        if "L3" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L3"]:
-                            pv_L3_power = float(jsonpayload["pv"]["L3"]["power"])
-                            pv_L3_current = float(jsonpayload["pv"]["L3"]["current"]) if "current" in jsonpayload["pv"]["L3"] else pv_L3_power / float(config["DEFAULT"]["voltage"])
-                            pv_L3_voltage = float(jsonpayload["pv"]["L3"]["voltage"]) if "voltage" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["voltage"])
-                            pv_L3_frequency = float(jsonpayload["pv"]["L3"]["frequency"]) if "frequency" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["frequency"])
-                            pv_L3_power_factor = float(jsonpayload["pv"]["L3"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L3"] else None
-                            if "energy_forward" in jsonpayload["pv"]["L3"]:
-                                pv_L3_forward = float(jsonpayload["pv"]["L3"]["energy_forward"])
+                            # check if L3 and L3 -> power exists
+                            if "L3" in jsonpayload["pv"] and "power" in jsonpayload["pv"]["L3"]:
+                                pv_L3_power = float(jsonpayload["pv"]["L3"]["power"])
+                                pv_L3_current = float(jsonpayload["pv"]["L3"]["current"]) if "current" in jsonpayload["pv"]["L3"] else pv_L3_power / float(config["DEFAULT"]["voltage"])
+                                pv_L3_voltage = float(jsonpayload["pv"]["L3"]["voltage"]) if "voltage" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["voltage"])
+                                pv_L3_frequency = float(jsonpayload["pv"]["L3"]["frequency"]) if "frequency" in jsonpayload["pv"]["L3"] else float(config["DEFAULT"]["frequency"])
+                                pv_L3_power_factor = float(jsonpayload["pv"]["L3"]["power_factor"]) if "power_factor" in jsonpayload["pv"]["L3"] else None
+                                if "energy_forward" in jsonpayload["pv"]["L3"]:
+                                    pv_L3_forward = float(jsonpayload["pv"]["L3"]["energy_forward"])
+                        # for Tasmota support
+                        # the power and power_L1-3 values have to be sent within the same second or
+                        # power as last one, else on startup the phases are not correctly recognized
+                        elif "power_L1" in jsonpayload["pv"]:
+                            pv_L1_power = float(jsonpayload["pv"]["power_L1"])
+                            pv_L1_voltage = float(config["DEFAULT"]["voltage"])
+                            pv_L1_current = pv_L1_power / float(config["DEFAULT"]["voltage"])
+                            pv_L1_frequency = float(config["DEFAULT"]["frequency"])
+                            pv_L1_forward = None
+                        elif "power_L2" in jsonpayload["pv"]:
+                            pv_L2_power = float(jsonpayload["pv"]["power_L2"])
+                            pv_L2_voltage = float(config["DEFAULT"]["voltage"])
+                            pv_L2_current = pv_L2_power / float(config["DEFAULT"]["voltage"])
+                            pv_L2_frequency = float(config["DEFAULT"]["frequency"])
+                            pv_L2_forward = None
+                        elif "power_L3" in jsonpayload["pv"]:
+                            pv_L3_power = float(jsonpayload["pv"]["power_L3"])
+                            pv_L3_voltage = float(config["DEFAULT"]["voltage"])
+                            pv_L3_current = pv_L3_power / float(config["DEFAULT"]["voltage"])
+                            pv_L3_frequency = float(config["DEFAULT"]["frequency"])
+                            pv_L3_forward = None
                     else:
                         logging.error('Received JSON MQTT message does not include a power object in the pv object. Expected at least: {"pv": {"power": 0.0}}')
                         logging.debug("MQTT payload: " + str(msg.payload)[1:])
@@ -266,7 +288,7 @@ class DbusMqttPvService:
         self._dbusservice.add_path("/ProductId", 0xFFFF)
         self._dbusservice.add_path("/ProductName", productname)
         self._dbusservice.add_path("/CustomName", customname)
-        self._dbusservice.add_path("/FirmwareVersion", "0.1.9-dev (20241008)")
+        self._dbusservice.add_path("/FirmwareVersion", "0.1.9-dev (20241220)")
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path("/Connected", 1)
 
