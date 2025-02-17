@@ -1,6 +1,8 @@
 # Changelog
 
-## v1.0.9-dev
+## v0.1.9
+⚠️ This version is required for Venus OS v3.60~27 or later, but it is also compatible with older versions.
+* Added: paho-mqtt module to driver
 * Added: Power factor
 * Added: Shelly Gen2+ device support by @jjdejong
 * Added: Tasmota device support
