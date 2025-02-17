@@ -291,7 +291,7 @@ class DbusMqttPvService:
         self._dbusservice.add_path("/ProductId", 0xFFFF)
         self._dbusservice.add_path("/ProductName", productname)
         self._dbusservice.add_path("/CustomName", customname)
-        self._dbusservice.add_path("/FirmwareVersion", "0.1.9 (20250217)")
+        self._dbusservice.add_path("/FirmwareVersion", "0.1.10-dev (20250217)")
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path("/Connected", 1)
 
