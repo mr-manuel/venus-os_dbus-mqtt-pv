@@ -153,7 +153,10 @@ def on_message(client, userdata, msg):
                     if isinstance(jsonpayload["pv"], dict):
                         if "power" in jsonpayload["pv"]:
                             pv_power = float(jsonpayload["pv"]["power"])
+                            pv_power_above_threshold = pv_power > standby_power
+                            pv_power = pv_power if pv_power_above_threshold else 0.0
                             pv_current = float(jsonpayload["pv"]["current"]) if "current" in jsonpayload["pv"] else pv_power / float(config["DEFAULT"]["voltage"])
+                            pv_current = pv_current if pv_power_above_threshold else 0.0
                             pv_voltage = float(jsonpayload["pv"]["voltage"]) if "voltage" in jsonpayload["pv"] else float(config["DEFAULT"]["voltage"])
                             if "energy_forward" in jsonpayload["pv"]:
                                 pv_forward = float(jsonpayload["pv"]["energy_forward"])
@@ -214,10 +217,11 @@ def on_message(client, userdata, msg):
 
                 elif "apower" in jsonpayload:
                     pv_power = float(jsonpayload.get("apower", 0))
-                    pv_power = pv_power if pv_power > standby_power else 0.0
+                    pv_power_above_threshold = pv_power > standby_power
+                    pv_power = pv_power if pv_power_above_threshold else 0.0
 
                     pv_current = float(jsonpayload.get("current", pv_power / float(config["DEFAULT"]["voltage"])))
-                    pv_current = pv_current if pv_current > standby_power else 0.0
+                    pv_current = pv_current if pv_power_above_threshold else 0.0
                     pv_voltage = float(jsonpayload.get("voltage", float(config["DEFAULT"]["voltage"])))
                     pv_forward = float(jsonpayload.get("aenergy").get("total")) / 1000 if "aenergy" in jsonpayload and "total" in jsonpayload["aenergy"] else None
 
