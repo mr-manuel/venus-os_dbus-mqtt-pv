@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.1.10-dev
+* Added: Standby power, values below are always shown as zero by @randomname32
 * Changed: Fix restart issue
 
 ## v0.1.9
